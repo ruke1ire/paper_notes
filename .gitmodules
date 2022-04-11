@@ -1,0 +1,3 @@
+[submodule "GBP_multi_robot_planning/tikz-bayesnet"]
+	path = GBP_multi_robot_planning/tikz-bayesnet
+	url = https://github.com/jluttine/tikz-bayesnet.git
