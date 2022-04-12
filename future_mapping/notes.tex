@@ -1,0 +1,172 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{bayesnet}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \href{https://arxiv.org/pdf/1910.14139.pdf}{FutureMapping 2: Gaussian Belief Propagation for Spatial AI}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Tutorial on Belief Propagation}
+
+Marginal distribution is found by taking the joint distribution, and summing over all of the other variables:
+\begin{equation}
+    p(x) = \sum_{\textbf{x} \setminus x}{p(\textbf{x})}.
+    \label{eq:marginal}
+\end{equation}
+The total joint probability can be written as the product of all factors in a graph: \footnote{Note that $p(\textbf{x})$ here may be unnormalized.}
+\begin{equation}
+    p(\textbf{x}) = \prod_s{f_s(\textbf{x}_s)},
+\end{equation}
+where for some measurement $z_s$,
+\begin{equation}
+    f_s(\textbf{x}_s) = p(z_s \mid \textbf{x}_s)
+\end{equation}
+
+Setting $F_s$ as the product of all factors associated with $f_s$ (a factor that is directly connnected to $x$) we get:
+\begin{equation}
+    p(\textbf{x}) = \prod_{s \in n(x)}{F_s(x, \textbf{X}_s)},
+    \label{eq:joint}
+\end{equation}
+where $n(x)$ is the set of factor nodes that are neighbors of $x$ and $\textbf{X}_s$ is the vector of all variables in the subtree conntected to $x$ via $f_s$. Note that with equation \ref{eq:joint} we reduce the problem of finding the joint probability to a local one $s\in n(x)$.
+ 
+Next, combining equations \ref{eq:marginal} and \ref{eq:joint} we get:
+\begin{equation}
+    p(x) = \sum_{\textbf{x} \setminus x}\Big[\prod_{s \in n(x)}{F_s(x, \textbf{X}_s)}\Big].
+\end{equation}
+We can reorder the sum and product to obtain:
+\begin{equation}
+    p(x) = \prod_{s \in n(x)}\Big[\sum_{\textbf{X}_s}{F_s(x, \textbf{X}_s)}\Big].
+    \label{eq:reordered}
+\end{equation}
+Intuitively, this reordering is simply changing the marginalisation to be over a subtree, then multiplying over all the marginals to get the final marginal. It effectively decouples the marginalisation process to a subtree (from the summation over $\textbf{x} \setminus x$ to $\textbf{X}_s$) allowing us to define a ``message" from $f_s$ as shown below. \footnote{A message is like a local marginalisation.}
+\begin{equation}
+    \mu_{f_s \rightarrow x} = \sum_{\textbf{X}_s}{F_s(x,\textbf{X}_s)}.
+    \label{eq:message_from_factor}
+\end{equation}
+Substituting Equation \ref{eq:message_from_factor} to \ref{eq:reordered} results in
+\begin{empheq}[box=\mymath]{equation}
+    p(x) = \prod_{s \in n(x)}\Big[\mu_{f_s \rightarrow x}\Big].
+\end{empheq}
+Next, we break down $F_s(x, \textbf{X}_s)$ as
+\begin{multline}
+F_s(x, \textbf{X}_s) = f_s(x,x_1,\dots,x_M)\\
+\times \big[G_1(x_1,\textbf{X}_{S_1}),\dots, G_M(x_M,\textbf{X}_{S_M})  \big] \\
+= f_s(x,x_1,\dots,x_M)\prod_{m\in n(f_s)} G_m(x_m, \textbf{X}_{S_m}),
+\label{eq:f}
+\end{multline}
+in which the factor $f_s$ is a function of all nodes conntected to it, and $G_m(x_m, X_{S_m})$ is defined as follows.
+\begin{equation}
+    G_m(x_m, \textbf{X}_{S_m}) = \prod_{l \in n(x_m) \setminus f_s}{F_l(x_m, \textbf{X}_{m_l})}.
+    \label{eq:g}
+\end{equation}
+Equation \ref{eq:g} shows the recursive nature of computing $F_s$ ($F \rightarrow G \rightarrow F \dots$), therefore we can reorganize and substitute equation \ref{eq:f} to equation \ref{eq:message_from_factor} to reflect this nature.
+\begin{multline}
+    \mu_{f_s \rightarrow x}(x) = \sum_{\textbf{X}_s}\Big[f_s(x,x_1,\dots,x_M) \prod_{m\in n(f_s)} G_m(x_m, \textbf{X}_{S_m})\Big]\\
+    = \sum_{x_1,\dots,x_M}\sum_{\textbf{X}_{S_1},\dots,\textbf{X}_{S_M}}\Big[f_s(x,x_1,\dots,x_M) \prod_{m\in n(f_s)} G_m(x_m, \textbf{X}_{S_m})\Big]\\
+    = \sum_{x_1,\dots,x_M}{f_s(x,x_1,\dots,x_M)}\prod_{m\in n(f_s)}\sum_{\textbf{X}_{S_1},\dots,\textbf{X}_{S_M}}G_m(x_m, \textbf{X}_{S_m})
+    \label{eq:message_from_factor2}
+\end{multline}
+Similar to Equation \ref{eq:message_from_factor}, $G_m$ can be thought of as a message coming from the variable, hence we define the message $\mu_{x_m \rightarrow f_s}(x_m)$ as follows:
+\begin{equation}
+    \mu_{x_m \rightarrow f_s}(x_m) = \sum_{\textbf{X}_{S_m}}{G_m(x_m, \textbf{X}_{S_m})}
+    \label{eq:message_from_variable}
+\end{equation}
+Substituting $\mu_{x_m \rightarrow f_s}$ to equation \ref{eq:message_from_factor2} we get
+\begin{empheq}[box=\mymath]{multline}
+    \mu_{f_s \rightarrow x}(x) = \sum_{x_1,\dots,x_M}{f_s(x,x_1,\dots,x_M)}\\
+    \times \prod_{m\in n(f_s)}\mu_{x_m \rightarrow f_s}(x_m).
+\end{empheq}
+Next, we substitute Equation \ref{eq:g} to \ref{eq:message_from_variable} to get
+\begin{equation}
+    \mu_{x_m \rightarrow f_s}(x_m) = \sum_{\textbf{X}_{S_m}}\prod_{l\in n(x_m) \setminus f_s}{F_l(x_m, \textbf{X}_{m_l})},
+\end{equation} 
+and swap the order of the sum and product to obtain:
+\begin{equation}
+    \mu_{x_m \rightarrow f_s}(x_m) = \prod_{l\in n(x_m) \setminus f_s}\sum_{\textbf{X}_{m_l}}{F_l(x_m, \textbf{X}_{m_l})}.
+\end{equation} 
+Finally we derive the message from variables that completes the recursion 
+\begin{empheq}[box=\mymath]{equation}
+    \mu_{x_m \rightarrow f_s}(x_m) = \prod_{l\in n(x_m) \setminus f_s}\mu_{f_l \rightarrow x_m}{(x_m)}.
+\end{empheq}
+
+In order to find the marginal distribution for $x$, we start from all of the leaf nodes of the factor graph relative to $x$, and pass messages inwards torwards $x$. To initialise the leaf nodes, a variable leaf node sends a message $\mu_{x \rightarrow f}(x) = 1$ to its only connected factor and a leaf factor sends $\mu_{f \rightarrow x}(x) = f(x)$.
+
+To find the marginal for \textit{all} variables, we send the messages outwards from the root back to the leaves.
+
+\section{Gaussian Belief Propagation}
+
+If the relationship between variables is linear, representing the probabilities of the variables with a multivariate Gaussian distribution enables the marginals to also be Gaussian distributions. 
+
+\subsection{Factor Definition}
+
+A Gaussian factor can be written as follows.
+\begin{equation}
+    f_s(\textbf{x}_s) = Ke^{-\frac{1}{2}[(\textbf{z}_s - \textbf{h}_s(\textbf{x}_s))^T\Lambda_s(\textbf{z}_s - \textbf{h}_s(\textbf{x}_s))]}.
+\end{equation}
+This expression represents the probability of obtaining measurement vector $\textbf{z}_s$ from the sensor based on the other variables $\textbf{x}_s$. $\textbf{h}_s$ is the function which describes the relationship between the variables on the expected measurement $\textbf{z}_s$. Matrix ${\bf\Lambda}_s$ is the precision of the measurement.
+
+With the information form (canonical form), the Gaussian distrubution can be represented as follows.\footnote{For more information about the information form read \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.140.3323&rep=rep1&type=pdf}{Exactly Sparse Delayed-State Filters}.}
+\begin{equation}
+    f_s(\textbf{x}_s) = Ke^{[-\frac{1}{2}\textbf{x}^T_s\boldsymbol{\Lambda}_s^{'}\textbf{x}_s + \boldsymbol{\eta}^T_s\textbf{x}_s]},
+\end{equation}
+where
+\begin{equation}
+    \boldsymbol{\eta}_s = \boldsymbol{\Lambda}_s \boldsymbol{\mu}_s.
+\end{equation}
+
+\subsection{State Representation}
+
+The probability distribution over state variables also have a Gaussian form as follows.
+\begin{equation}
+    p_m(\textbf{x}_m) = Ke^{[-\frac{1}{2}\textbf{x}^T_m{\bf\Lambda}_m\textbf{x}_m + {\bf\eta}^T_m\textbf{x}_m]}.
+\end{equation}
+
+\subsection{Linearising Factors}
+
+We can linearise any factor to the equation below
+\begin{equation}
+    f_s(\textbf{x}_s) = Ke^{[-\frac{1}{2}\textbf{x}^{T}_{s} \boldsymbol{\Lambda}^{'}_s\textbf{x}_s + \boldsymbol{\eta}_s^T\textbf{x}_s]}
+\end{equation}
+\begin{equation}
+    \boldsymbol{\eta}_s = \textbf{J}^T_s\boldsymbol{\Lambda}_s[\textbf{J}_s\textbf{x}_0 + \textbf{z}_s - \textbf{h}_s(\textbf{x}_0)]
+\end{equation}
+\begin{equation}
+    \boldsymbol{\Lambda}^{'}_s = \textbf{J}_s^T\boldsymbol{\Lambda}_s\textbf{J}_s.
+\end{equation}
+where $\textbf{J}_s$ is the Jacobian $\frac{\partial \textbf{h}_s}{\partial \textbf{x}_s} \vert_{\textbf{x}_s = \textbf{x}_0}$, $\textbf{x}_0$ is the point of linearisation.
+
+\subsection{Message Passing at a Variable Node}
+
+For GBP, each incoming message $\mu_{f_l \rightarrow \textbf{x}_m}(\textbf{x}_m)$ is represented by an information vector $\boldsymbol{\eta}_{ml}$ and a precision matrix $\boldsymbol{\Lambda}_{ml}$.
+The outgoing message $\mu_{\textbf{x}_m \rightarrow f_s }(\textbf{x}_m)$ is computed by simply adding 
+\begin{equation}
+    \boldsymbol{\eta}_{ms} = \sum_{l \in n(\textbf{x}_m) \setminus f_s}{\boldsymbol{\eta}_{ml}}
+\end{equation}
+\begin{equation}
+    \boldsymbol{\Lambda}_{ms} = \sum_{l \in n(\textbf{x}_m) \setminus f_s}{\boldsymbol{\Lambda}_{ml}}.
+\end{equation}
+This is equivalent to multiplying the distributions.
+
+
+
+\end{document}
