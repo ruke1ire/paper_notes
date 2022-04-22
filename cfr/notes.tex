@@ -1,0 +1,87 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{bayesnet}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\begin{document}
+
+\title{Notes on \href{https://proceedings.neurips.cc/paper/2007/file/08d98638c6fcd194a4b1e6992063e944-Paper.pdf}{Regret Minimization in Games with Incomplete Information}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Review Regret Matching}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!15!white,coltitle=black, boxrule=0pt,title=Algorithm, drop shadow southeast, enhanced]
+\begin{enumerate}
+    \item Compute the policy from the regret.
+    \item Play the action.
+    \item Compute regrets and add it to the cumulative regrets
+\end{enumerate}
+\end{tcolorbox}
+
+\section{Counterfactual Regret Minimization}
+
+Theoretically, regret matching can be utilized for games that require historical context by simply creating a state for every historical pattern. However, the size of the state space may be prohibitively large. As the name implies, counterfactual regret minimization is a modularization of regret matching by individually minimizing the counterfactual regrets.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!15!white,coltitle=black, boxrule=0pt,title=Keywords, drop shadow southeast, enhanced]
+    \begin{itemize}
+        \item \textbf{Information set}: Are set of game states that the controlling player cannot distinguish and so must choose actions for such states with the same distribution.
+        \item \textbf{Strategy}: A strategy of player $i$ $\sigma_i$ is a function that assigns a distribution over $A(I_i)$ to each $I_i \in \mathcal{I}_i$. $\Sigma_i = \{\sigma(I_i) : I_i \in \mathcal{I}_i\}$ refers to player $i$'s set of strategies. 
+        \item \textbf{Strategy Profile}: A strategy profile $\sigma$ is the set of every player's strategy $\sigma_1, \sigma_2, \dots$. We denote $\sigma_{-i}$ as all the strategies in $\sigma$ except $\sigma_i$.
+    \end{itemize}
+\end{tcolorbox}
+
+A finite extensive game with imperfect information has the following components
+\begin{itemize}
+    \item A finite set $N$ of \textbf{players}.
+    \item A finite set $H$ of sequences, which represent the possible histories of actions, such that the empty sequence is in $H$, and every prefix of a sequence in $H$ is also in $H$. $Z \subseteq H$ are the terminal histories (those which are not a prefix of any other sequences). $A(h) = {a: (h,a) \in H}$ are the actions avaialble after a nonterminal history $h \in H$.
+    \item A function $P$ that assigns to each nonterminal history a member of $N \cup \{ c \} $. $P$ is the \textbf{player function}. $P(h)$ is the player who takes an action after the history $h$. If $P(h) = c$ then chance determines the action taken after history $h$.
+    \item A function $f_c$ that (associatees with every history $h$ for which $P(h) = c$) a probability measure $f_c(\cdot \mid h)$ on $A(h)$, where each probability measure is independent of every other such measure.
+    \item For each player $i \in N$ an \textbf{information partition} $\mathcal{I}_i$ is a set of \textbf{information sets} $I_i$. In which $A(h) = A(h')$ whenever both $h, h' \in I_i$. Therefore $A(h) = A(I_i)$ and $P(h) = P(I_i)$ for all $h \in I_i$.
+    \item For each player $i \in N$ a utility function $u_i$ maps each terminal state $Z$ to $\mathbb{R}$. If $N = \{1,2\}$ and $u_1=-u_2$, it is a \textbf{zero-sum extensive game}. We additionally define $\Delta_{u,i} = \text{max}_z u_i(z) - \text{min}_z u_i(z)$ as the range of utilities.
+\end{itemize}
+
+Let $\pi^\sigma(h)$ be the probability of history $h$ occuring if players choose actions according to $\sigma$. We can decompose $\pi^\sigma = \prod_{i \in N \cup \{c \}}\pi^\sigma_i(h)$. Hence $\pi^\sigma_i(h)$ is the probability if player $i$ picks all the actions in $h$. We denote $\pi^\sigma_{-i}(h)$ be the product of all player's contribution (including chance $c$) except player $i$. $\pi^\sigma(I) = \sum_{h \in I}\pi^\sigma(h)$ is the probability of reaching a particular information set $I$ given $\sigma$.
+
+The overall value to player $i$ of a strategy profile is formulated as $u_i(\sigma) = \sum_{h \in Z}{u_i(h)\pi^\sigma (h)}$.
+
+The \textbf{average overall regret} of player $i$ at time $T$ is:
+\begin{equation}
+    R^T_i = \frac{1}{T}\mathop{\text{max}}_{\sigma^{*}_i \in \Sigma_i}\sum_{t=1}^T(u_i(\sigma^{*}_i, \sigma^t_{-i}) - u_i(\sigma^t)).
+\end{equation}
+The \textbf{immediate counterfactual regret} is:
+\begin{equation}
+    R^T_{i,imm}(I) = \frac{1}{T}\mathop{\text{max}}_{a \in A(I)}\sum_{t=1}^T{\pi^{\sigma^t}_{-i}(I)(u_i(\sigma^t|_{I \rightarrow a}, I) - u_i(\sigma^t, I))}.
+\end{equation}
+Here, $\sigma^t|_{I \rightarrow a}$ is the strategy profile identical to $\sigma$ except that player $i$ always chooses action $a$ when in information set $I$, $u(\sigma, I)$ is the expected utility given that information set $I$ is reached formulated as follows.
+\begin{equation}
+    u_i(\sigma, I) = \frac{\sum_{h \in I, h' \in Z}\pi^\sigma_{-i}(h)\pi^\sigma(h,h')u_i(h')}{\pi^\sigma_{-i}(I)}.
+\end{equation}
+
+To minimize the counterfactual regret, we define
+\begin{equation}
+    R^T_{i,imm}(I,a) = \frac{1}{T}\sum_{t=1}^T{\pi^{\sigma^t}_{-i}(I)(u_i(\sigma^t|_{I \rightarrow a}, I) - u_i(\sigma^t, I))},
+\end{equation}
+and $R^{T,+}_i(I,a) = \text{max}(R^T_i(I,a),0)$. Then using the Blackwell's algorithm for approachability, the strategy for time $T+1$ is:
+\begin{equation}
+    \sigma^{T+1}_i(I)(a) = \begin{cases}
+        \frac{R^{T,+}_i(I,a)}{\sum_{a \in A(I)}{R^{T,+}_i(I,a)}} & \text{if} \sum_{a \in A(I)}{R^{T,+}_i(I,a)} > 0 \\
+        \frac{1}{|A(I)|} & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+
+
+
+\end{document}
