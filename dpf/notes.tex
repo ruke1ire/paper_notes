@@ -1,0 +1,30 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{bayesnet}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \href{https://arxiv.org/pdf/1805.11122.pdf}{Differentiable Particle Filters: End-to-End Learning with Algorithmic Priors}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+
+\end{document}
