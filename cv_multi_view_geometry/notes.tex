@@ -5,9 +5,10 @@
 \usepackage{pifont}
 \usepackage{hyperref}
 \usepackage{tikz}
-\usetikzlibrary{bayesnet}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{geometry}
+\geometry{a4paper, margin=1cm, includefoot}
 
 \begin{document}
 
@@ -17,7 +18,126 @@
 
 \maketitle
 
-\section{Geometry}
+\section{Background}
+
+\begin{itemize}
+    \item Homogenous representation of 2D points is $(x,y,w)$, where the corresponding point in Euclidean space is $(x/w,y/w)$.
+    \item Homogenous matrix $\textbf{H}$ transforms homogenous points. $\textbf{x}'=\textbf{Hx}$. 
+    \item An image can be "warped" using $\textbf{H}$.
+    \item Hierarchy of transformations:
+    \begin{itemize}
+        \item Class 1: \textbf{Isometries}: Transformations that preserve euclidean distance. 
+            \begin{equation}
+                \begin{pmatrix}
+                    x' \\ y' \\ 1
+                \end{pmatrix} =
+                \begin{bmatrix}
+                    \epsilon \text{cos} \theta  & - \text{sin} \theta   & t_x \\
+                    \epsilon \text{sin} \theta  & \text{cos} \theta     & t_y \\
+                    0                  & 0                     & 1
+                \end{bmatrix}\begin{pmatrix}
+                    x \\ y \\ 1
+                \end{pmatrix}, 
+            \end{equation}
+            where $\epsilon = \pm 1$.
+        \item Class 2: \textbf{Similarity Transformations}: An isometry composed with scaling.
+            \begin{equation}
+                \begin{pmatrix}
+                    x' \\ y' \\ 1
+                \end{pmatrix} =
+                \begin{bmatrix}
+                    s\text{cos} \theta  & - s\text{sin} \theta   & t_x \\
+                    s\text{sin} \theta  & s\text{cos} \theta     & t_y \\
+                    0                   & 0                     & 1
+                \end{bmatrix}\begin{pmatrix}
+                    x \\ y \\ 1
+                \end{pmatrix}.
+            \end{equation}
+        \item Class 3: \textbf{Affine Transfomrations}: A non-singular linear transformation followed by a translation.
+            \begin{equation}
+                \begin{pmatrix}
+                    x' \\ y' \\ 1
+                \end{pmatrix} =
+                \begin{bmatrix}
+                     a_1 & a_2 & t_x \\
+                     a_3 & a_4 & t_y \\
+                     0                   & 0                     & 1
+                \end{bmatrix}\begin{pmatrix}
+                    x \\ y \\ 1
+                \end{pmatrix},
+            \end{equation} in which $a_1$ to $a_4$ are the components of an affine matrix $A$.
+        \item Class 4: \textbf{Projective Transfomrations}: A general non-singular linear transformation.
+            \begin{equation}
+                \begin{pmatrix}
+                    x' \\ y' \\ 1
+                \end{pmatrix} =
+                \begin{bmatrix}
+                     a_1 & a_2 & t_x \\
+                     a_3 & a_4 & t_y \\
+                     v_1                   & v_2                     & v_3
+                \end{bmatrix}\begin{pmatrix}
+                    x \\ y \\ 1
+                \end{pmatrix}.
+            \end{equation}
+        \end{itemize}
+    \item Different cost functions.
+        \begin{enumerate}
+            \item \textbf{Algebraic distance}: Is the algebraic residual of $||A\textbf{h}||$ which ideally optimizes to satisfy $Ah = 0$. Problem is that this error doesn't really correspond to any real measurable quantity.
+            \item \textbf{Geometric distance}: Is the geometric distance in the image, such as the difference between the measured and estimated image coordinates.
+            \item \textbf{Reprojection error}: Is the geometric distance between ideal points and actual points such that the ideal points corresponds with a perfect homography.
+        \end{enumerate}
+    \item  Generally speaking optimization takes these steps outlined below.
+        \begin{enumerate}
+            \item Pose the problem as something like a non-linear least squares problem.
+            \item Normalize coordinates/image.
+            \item Use the direct linear transform (DLT) algorithm to find a starting point for a non-linear optimizer (which are generally iterative).
+            \item Use a non-linear least squares optimizer such as the Levenberg-Marquardt algorithm.
+        \end{enumerate}
+        Optionally, to make the algorithm more robust, \textbf{RANSAC} can be utilized, in which, the minimum amount of functions required for solving the list of parameters are queried, and used to find the number of correspondences that are approximately satisfied. The set of minimal functions that satisfies the largest amount of correspondences is then picked as the final solution to the optimization problem. This acts as a method of robust to outliers.
+
+\end{itemize}
+
+\section{Camera Geometry and Single View Geometry}
+
+\begin{itemize}
+    \item Steps to convert 3D point to points in the camera's coordinate:
+    \begin{enumerate}
+        \item Projecting 3D point to a 2D point: 
+            \begin{equation}
+                \begin{pmatrix}
+                    fX \\ fY \\ Z 
+                \end{pmatrix} = \begin{bmatrix}
+                    f & & & 0 \\
+                     & f & & 0 \\
+                     & & 1 & 0 \\
+                \end{bmatrix}\begin{pmatrix}
+                    X \\ Y \\ Z \\ 1
+                \end{pmatrix}.
+            \end{equation}
+            In which $f$ is the focal length.
+        \item Offsetting the point so that 0,0 lies on the top left of the image.
+            \begin{equation}
+                \begin{pmatrix}
+                    fX \\ fY \\ Z 
+                \end{pmatrix} = \begin{bmatrix}
+                    f & & p_x & 0 \\
+                     & f & p_y & 0 \\
+                     & & 1 & 0 \\
+                \end{bmatrix}\begin{pmatrix}
+                    X \\ Y \\ Z \\ 1
+                \end{pmatrix}.
+            \end{equation}
+            In which $p_x$ and $p_y$ is the offset in pixels. Here we can set \begin{equation}
+                K = \begin{bmatrix}
+                    f & & p_x & 0 \\
+                     & f & p_y & 0 \\
+                     & & 1 & 0 \\
+                \end{bmatrix},
+            \end{equation}
+            and call $K$ the \textit{camera calibration matrix}.
+    \end{enumerate}
+\end{itemize}
+
 
 \end{document}
 
