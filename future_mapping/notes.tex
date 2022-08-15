@@ -26,20 +26,40 @@
 
 \maketitle
 
+\section{Overview}
+
+This note lays out the formulation of belief propagation, and subsequently Gaussian belief propagation (GBP). Both these algorithms take advantage of a graphical structure called \textbf{Factor Graphs}. Within it, there are \textbf{factor nodes} and \textbf{variable nodes}. Variable nodes contain variables that we would like to compute the marginal probability of, and factor nodes relates the various variable nodes together with a joint distribution.
+
+\subsection{Example Problem}
+
+Understanding this algorithm is difficult when only looking at the mathematical formulations and abstractions therefore this section provides concrete examples where the GBP algorithm may be used.
+
+\begin{itemize}
+    \item \textbf{Background:} There are two robots, robot A and robot B. Robot A measures the distance from itself to robot B with a sensor (which has Gaussian noise). Robot A also has a belief on its own position (characterized by a Gaussian distribution).
+    \item \textbf{Problem:} Find the position of robot B.
+    \item \textbf{Solution:} In order to find the position of robot B, we can simply add robot A's position with the relative distance between robot A and robot B from the sensor. However, there are distributions associated with both the position and the measurement, therefore we should view robot A and robot B's positions to be in a joint distribution (\textbf{factor node}), then marginalize robot B's position to get its distribution (belief).
+\end{itemize}
+
+The previous example illustrates a single message passing scheme, which does not fully take advantage of Gaussian belief propagation.
+
+\begin{itemize}
+    \item \textbf{Background:} Now instead of two robots imagine hundreds of robots. Each robot has the ability to measure another robot that is in its visibility range. They all also have a belief on its own position.
+    \item \textbf{Problem:} Find the position of every robot so that they consistent with each other.
+    \item \textbf{Solution:} Each measurement of another robot creates a new factor node. A factor node represents the flow of belief from one variable node to another. Therefore in this case, if there are multiple robots that have measurements of a robot, all the beliefs from the multiple robots are combined to update the belief of the robot being measured. This process iteratively updates the position of every robot in the graph and slowly converges to states that are consistent to one another in a distributed manner.
+\end{itemize}
+
+It is important to point out that GBP provides a way to create a globally consistent graph with distributed computation. Additionally, GBP supports ad-hoc message passing making it suitable for robotics applications.
+
 \section{Tutorial on Belief Propagation}
 
-Marginal distribution is found by taking the joint distribution, and summing over all of the other variables:
+Marginal distribution is found by taking the joint distribution, and summing over all the other variables:
 \begin{equation}
     p(x) = \sum_{\textbf{x} \setminus x}{p(\textbf{x})}.
     \label{eq:marginal}
 \end{equation}
-The total joint probability can be written as the product of all factors in a graph: \footnote{Note that $p(\textbf{x})$ here may be unnormalized.}
+The total joint probability is defined as the product of all factors in a graph: \footnote{Note that $p(\textbf{x})$ here may note be normalized.}
 \begin{equation}
     p(\textbf{x}) = \prod_s{f_s(\textbf{x}_s)},
-\end{equation}
-where for some measurement $z_s$,
-\begin{equation}
-    f_s(\textbf{x}_s) = p(z_s \mid \textbf{x}_s)
 \end{equation}
 
 Setting $F_s$ as the product of all factors associated with $f_s$ (a factor that is directly connnected to $x$) we get:
