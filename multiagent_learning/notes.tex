@@ -1,0 +1,118 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \textbf{Multiagent Learning}\\\small{(Chapter 10 of Multiagent Systems by \textit{Gerhard Weiss})}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Challenges in Multiagent Learning}
+
+\begin{itemize}
+    \item Linear increase in the number of agents increases the state space and action space exponentially.
+    \item Credit assignment is difficult for two reasons. One, \textit{delayed feedback} mechanism makes it more difficult to assign credit to a particular action is a sequence; and two, the \textit{structural credit assignment problem} of how to assign credit to a particular agent based on the performance of a set of agents.
+    \item System rewards may not be directly used as an agent's rewards.
+\end{itemize}
+
+\section{Measures of reward structure}
+
+\begin{itemize}
+    \item \textbf{Alignment} (factoredness): defines the correlation between an agent's reward and the system's reward. In an environment with high factoredness, an agent that improves their own performance tend to improve system performance.
+    \item \textbf{Sensitivity} (learnability): defines how discernible the impact of an action is on an agent's reward function.
+\end{itemize}
+
+\subsection{Example reward structures}
+
+\begin{enumerate}
+    \item \textbf{Full system reward}: Each agent receives the full system reward. Resulting in high factoredness but low learnability (because it is not easy to discern which actions led to the system reward).
+    \item \textbf{Local reward}: Each agent receives a portion of the full system reward depending on its state. This results in higher learnability compared to using full system reward but may have a low degree of factoredness.
+    \item \textbf{Difference reward}: Each agent receives a reward based on the difference between the system reward and the system reward that would have resulted had the agent performed some "null" action.
+\end{enumerate}
+
+\vfill\eject
+
+\section{Reinforcement Learning for Multiagent Systems}
+
+\subsection{Multiagent MDP Formulations}
+
+\begin{table}[h]
+    \centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+    \textbf{State} &  \textbf{Action} & \textbf{Reward} & \textbf{MDP} \\ \hline
+    Full &      Joint &         Team &  $\langle S, A, T, R, \Pi \rangle$ \\ \hline
+    Full &      Independent &   Team &  $\langle S, A, T, R, \Pi_i \rangle$       \\ \hline
+    Full &      Independent &   Local & $\langle S, A_i, T, R_i, \Pi_i \rangle$       \\ \hline
+    Local &     Independent &   Team &  $\langle S_i, A_i, T, R, \Pi_i \rangle$        \\ \hline
+    Local &     Independent &   Local & $\langle S_i, A_i, T, R_i, \Pi_i \rangle$        \\ \hline
+\end{tabular}
+    \caption{A non-exhaustive list of potential MDP formulations}
+\end{table}
+
+\subsection{Markov Games}
+
+Markov games can be thought of extensions of Markov decision processes.
+
+\begin{definition}[Markov Games]
+    The game $G = \langle n, S, A, T, \tau, \pi^1 ... \pi^n \rangle$ is a stochastic game with $n$ players and $k$ states. In each state $s \in S = (s^1, ..., s^k)$ each player i chooses an action $a^i$ from its admissible action set $A^i(s)$ according to its strategy $\pi^i(s)$.
+
+
+    The payoff function $\tau(s,a):\prod^{n}_{i=1}A^i(s) \mapsto R^n$ maps the joint action $a = (a^1, ..., a^n)$ to an immediate payoff value for each player.
+
+    The transition function $T(s,a):\prod^n_{i=1}A^i(s) \mapsto \Delta^{k-1}$ determines the probabilistic state change, where $\Delta^{k-1}$ is the $(k-1)\text{-simplex}$ and $T_{s'}(s,a)$ is the transition probability from state $s$ to $s'$ under joint action $a$.
+\end{definition}
+
+\subsection{Example Algorithms}
+
+\begin{itemize}
+    \item \textbf{Joint Action Learning}: Same as single agent Q-learning, Q-values are computed for each joint action.
+    \item \textbf{Nash-Q Learning}: Similar to single agent Q-learning except that the value of a state is estimated as the sum of the current reward with the value of an agent following a policy at Nash equilibrium.
+\end{itemize}
+
+\subsection{Solution Concepts}
+
+\newtheorem{concept}{Solution Concept}[section]
+\begin{concept}[Nash equilibrium]
+    When two players play the strategy profile $s = (s_i,s_j)$ belonging to the product set $S_1 \times S_2$, then $s$ is a Nash equilibrium if \\
+    \begin{center}
+        $P_1(s_i,s_j) \geq P_1(s_x, s_j) \; \forall x \in \{1,...,n\}$ \\
+        $P_2(s_i,s_j) \geq P_2(s_i, s_y) \; \forall y \in \{1,...,n\}$.
+    \end{center}
+
+    In which, $P_1$ and $P_2$ are the payoffs of player 1 and player 2 respectively.
+\end{concept}
+
+\begin{concept}[Pareto optimal]
+    A strategy combination $s = (s_1, ..., s_n)$ for $n$ agents in a game is Pareto optimal if there does not exist another strategy combination $s'$ for which each player receives at least the same payoff $P_i$ and at least one player $j$ receives a strictly higher payoff than $P_j$.
+\end{concept}
+
+\section{Swarm Intelligence}
+
+\begin{itemize}
+    \item \textbf{Ant Colony Optimization}: Based on the concept of pheromones. Each agent independently finds the goal, but in the process leaves a trail of pheromones, which attract other ants.
+    \item \textbf{Bee Colony Optimization}: Similar to ant colony optimization. But instead of using pheromones (which can be thought of as an indirect medium of communication between ants), bees are able to signal to other bees the location of the food source; in other words, bee colony optimization employ direct communication.
+\end{itemize}
+
+\end{document}
