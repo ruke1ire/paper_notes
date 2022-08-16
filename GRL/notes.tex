@@ -28,6 +28,142 @@
 
 \maketitle
 
-\section{Introduction}
+\section{Representing Graphs}
+
+Formally, a graph is defined as follows.
+\begin{equation}
+\mathcal{G} = (\mathcal{V}, \mathcal{E}).
+\end{equation}
+In which, $\mathcal{V}$ and $\mathcal{E}$ are the nodes and edges of the graphs. Edges going from $u \in \mathcal{V}$ to $v \in \mathcal{V}$ are represented as $(u,v) \in \mathcal{E}$.
+
+Graphs can be represented using an \textit{adjacency matrix} $\textbf{A} \in \mathbb{R}^{|\mathcal{V}|x|\mathcal{V}|}$, in which $A[u,v]$ represent $(u,v) \in \mathcal{E}$. Given output unit of every node $\mathbf{u} \in \mathbb{R}^{|V|}$, $\mathbf{s} = \mathbf{A}\mathbf{u}$ is the combined weighed signal from every adjacent node. Moreover, $\mathbf{A}^i[u,v]$ represents the number of $i$-length paths that connects $u$ and $v$.
+
+Nodes within a graph may have \textit{features} or \textit{attributes} associated with them. They can be represented with matrix $\textbf{X} \in \mathbb{R}^{|V|\times m}$, for nodes with $m$ features.
+
+\subsection{Graph Laplacians}
+
+Graph \textit{Laplacians} have many useful mathematical properties.
+
+\subsubsection{Unnormalized Laplacian}
+
+\begin{equation}
+    \mathbf{L} = \mathbf{D} - \mathbf{A},
+\end{equation}
+where $\mathbf{D}$ is  matrix with node degrees (see Equation \ref{degree}) on its diagonals. The Laplacian summarizes many important properties of the graph.
+
+\section{Types of Graphs}
+
+\begin{itemize}
+    \item \label{simple_graph} \textbf{Simple graphs} are graphs with at most one edge between each pair of nodes, and all edges are undirected.
+    \item \textbf{Heterogeneous graphs}: Nodes have types, and edges satisfy constraints according to those types.
+    \item \textbf{Multiplex graphs}: Graph is decomposed in a set of k \textit{layers}. Every node is assumed to belong to every layer, and each layer corresponds to a unique relation.
+\end{itemize}
+
+\section{Machine Learning on Graphs}
+
+The following lists the types of tasks that may be done on graphs.
+
+\begin{itemize}
+    \item \textbf{Node classification}: Classify a node based on its features and relations to other nodes. Ideas such as \textit{homophily}, which is the tendency for nodes to share attributes with their neighbors; \textit{structural equivalence}, which is the idea that nodes with similar local neighborhood structures will have similar labels; and \textit{heterophily}, which presumes that nodes will be preferentially connected to nodes with different labels, have been used to assist node classification.
+    \item \textbf{Relation prediction}: Also known as link prediction, graph completion, relational inference, is the task of inferring edges between nodes in a graph.
+    \item \textbf{Clustering and community detection}: Finding subgroups that may be useful.
+    \item \textbf{Graph classification, regression, and clustering}: Graphs are treated as data points, which is to be classified, regressed, or clustered.
+\end{itemize}
+
+\section{Graph Statistics and Features}
+
+The following lists node-level statistics and features.
+\begin{itemize}
+    \item \textbf{Node degree}: The number of edges incident to a node.
+        \begin{equation} \label{degree}
+            d[u] = \sum_{v \in V}\textbf{A}[u,v],
+        \end{equation}
+        \begin{equation}
+            \mathbf{d} = \mathbf{A}\mathbf{1}_{|V|},
+        \end{equation}
+        in which, $\mathbf{1}_{|V|} = (1,...,1) \in \mathbb{R}^{|V|}$.
+    \item \textbf{Node centrality}: \textit{Eigenvector centrality} is a measure of node importance. The eigenvector $\mathbf{e}$ corresponding to the largest eigenvalue $\lambda$ contains the importance of each node on its indices.
+        \begin{equation}
+            \lambda \mathbf{e} = \mathbf{A}\mathbf{e}
+        \end{equation}
+        \begin{equation}
+            \mathbf{e}[u] = \frac{1}{\lambda}\sum_{v \in V}\mathbf{A}[u,v]\mathbf{e}[v].
+        \end{equation}
+    \item \textbf{Clustering coefficient}: Measures the degree of clustering for a node. It is the ratio between the number of adjacent node pairs that are also adjacent to each other by the total combination of node pairs for $u$.
+        \begin{equation}
+            c[u] = \frac{|(v_1, v_2) \in \mathcal{E}:v_1, v_2 \in \mathcal{N}(u)|}{\binom{d[u]}{2}}.
+        \end{equation}
+    An alternative way of viewing the clustering coefficient is that it counts the number of closed triangles that is connected to a particular node.
+\end{itemize}
+
+The following lists graph-level features and kernels.
+\begin{itemize}
+    \item \textbf{Bag of nodes}: An aggregated view of node-level representations. Such as histograms of degrees, centralities, and clustering coefficients of the nodes in the graph.
+    \item \textbf{Weisfeiler-Lehman (WL)}: Is a kernel and an algorithm that iteratively aggregates the neighborhood to find statistics beyond the immediate neighbor of a node. The algorithm is as follows:
+        \begin{enumerate}
+            \item Assign an initial label to each node. In many cases, this is the degree of each node; $l_0(v) = d[v]$.
+            \item Next, a new label is iteratively assigned with an aggregation function.
+                \begin{equation}
+                    l_i(v) = \text{AGGR}\bigl( \{ l_{i-1}(u) \; \forall u \in \mathcal{N}(v) \}\bigr)
+                \end{equation}
+            \item After $K$ iterations we have $l_K(v)$, which is a K-hop summary of every node. Which can be used to compare nodes at a higher level.
+        \end{enumerate}
+    \item \textbf{Graphlets}: Graphlets are subgraph structures that may commonly exhibit within larger graphs. The number of these different structures can be treated as graph-level features.
+\end{itemize}
+
+The following lists statistics on node-to-node relationships within graphs.
+\begin{itemize}
+    \item \textbf{Similarity matrix}: $\mathbf{S} \in \mathbb{R}^{|V|\times |V|}$ is a matrix containing the number of shared neighbors of each node pairs.
+        \begin{equation}
+            \mathbf{S}[u,v] = |\mathcal{N}(u)\cap\mathcal{N}(v)|.
+        \end{equation}
+    \item \textbf{Sorenson index}: Similarity matrix with normalization.
+        \begin{equation}
+            \mathbf{S}_{\text{Sorenson}}[u,v] = \frac{2\mathbf{S}[u,v]}{d[u] + d[v]}.
+        \end{equation}
+    \item \textbf{Salton index}: Similarity matrix with normalization.
+        \begin{equation}
+            \mathbf{S}_{\text{Salton}}[u,v] = \frac{2\mathbf{S}[u,v]}{\sqrt{d[u]d[v]}}.
+        \end{equation}
+    \item \textbf{Jaccard index}: Similarity matrix with normalization.
+        \begin{equation}
+            \mathbf{S}_{\text{Jaccard}}[u,v] = \frac{\mathbf{S}[u,v]}{|\mathcal{N}(u) \cup \mathcal{N}(v)|}.
+        \end{equation}
+    \item \textbf{Resource allocation (RA) index}: Counts the inverse degrees of common neighbors,
+        \begin{equation}
+            \mathbf{S}_{\text{RA}}[v_1, v_2] = \sum_{u \in \mathcal{N}(v_1) \cap \mathcal{N}(v_2)}{\frac{1}{d[u]}}
+        \end{equation}
+    \item \textbf{Adamic-Adar (AA) index}: Similar to RA index but using the inverse log.
+        \begin{equation}
+            \mathbf{S}_{\text{AA}}[v_1, v_2] = \sum_{u \in \mathcal{N}(v_1) \cap \mathcal{N}(v_2)}{\frac{1}{\text{log}(d[u])}}
+        \end{equation}
+    \item \textbf{Katz index}: Counts the number of paths of all lengths between a pair of nodes.
+        \begin{equation}
+            \mathbf{S}_{\text{Katz}}[u,v] = \sum_{i=1}^{\infty}{\beta^i\mathbf{A}^i[u,v]},
+        \end{equation}
+        where $\beta \in \mathbb{R}^{+}$ is a user-defined parameter controlling how much weight is given to short versus long paths.
+    \item \textbf{LHN similarity}: A normalized version of the Katz index, which reduces a high-degree bias in the Katz index.
+        \begin{equation}
+            \mathbf{S}_{\text{LNH}}[u,v] = \mathbf{I}[u,v] + \frac{2m}{d[u]d[v]} \sum_{i=0}^{\infty}\beta^i\lambda^{1-i}_1 \mathbf{A}^i[u,v],
+        \end{equation}
+        in which $\lambda_1$ is the largest eigenvalue of $\mathbf{A}$.
+    \item \textbf{Random walk similarity}: Similarity between two nodes is proportional to how likely we are to reach each node from random walk starting from the other node.
+        \begin{equation}
+            \mathbf{P} = \mathbf{A}\mathbf{D}^{-1}.
+        \end{equation}
+        Here $\mathbf{P[u,v]}$ is a stochastic adjacency matrix, with adjacency probability scaled proportional to the node's inverse degree.
+        \begin{equation}
+            \mathbf{q}_u = c\mathbf{P}\mathbf{q}_u + (1-c)\mathbf{e}_u.
+        \end{equation}
+        This implicit equation models the probability of reaching each node with a random walk policy. The $c$ term determines the probability that the random walk restarts at $u$ and $\mathbf{e}_u$ is a one-hot indicator vector for node $u$. The solution to this recurrence is as follows.
+        \begin{equation}
+            \mathbf{q}_u = (1-c)(\mathbf{I}-c\mathbf{P})^{-1}\mathbf{e}_u.
+        \end{equation}
+        Finally, random walk similarity formulated as follows.
+        \begin{equation}
+            \mathbf{S}_{\text{RW}}[u,v] = \mathbf{q}_u[v] + \mathbf{q}_v[u].
+        \end{equation}
+\end{itemize}
+
 
 \end{document}
