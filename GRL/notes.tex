@@ -14,6 +14,7 @@
 
 \theoremstyle{plain}
 \newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
 
 \newtcbox{\mymath}[1][]{%
     nobeforeafter, math upper, tcbox raise base,
@@ -23,7 +24,7 @@
 
 \begin{document}
 
-\title{Notes on \href{https://www.cs.mcgill.ca/~wlh/grl_book/files/GRL_Book.pdf}{Graph Representation Learning}}
+\title{Notes on \href{https://www.cs.mcgill.ca/~wlh/grl_book/files/GRL_Book.pdf}{Graph Representation Learning}\\\small{Chapters 1 - 2}}
 \author{Rom Parnichkun}
 
 \maketitle
@@ -39,17 +40,6 @@ In which, $\mathcal{V}$ and $\mathcal{E}$ are the nodes and edges of the graphs.
 Graphs can be represented using an \textit{adjacency matrix} $\textbf{A} \in \mathbb{R}^{|\mathcal{V}|x|\mathcal{V}|}$, in which $A[u,v]$ represent $(u,v) \in \mathcal{E}$. Given output unit of every node $\mathbf{u} \in \mathbb{R}^{|V|}$, $\mathbf{s} = \mathbf{A}\mathbf{u}$ is the combined weighed signal from every adjacent node. Moreover, $\mathbf{A}^i[u,v]$ represents the number of $i$-length paths that connects $u$ and $v$.
 
 Nodes within a graph may have \textit{features} or \textit{attributes} associated with them. They can be represented with matrix $\textbf{X} \in \mathbb{R}^{|V|\times m}$, for nodes with $m$ features.
-
-\subsection{Graph Laplacians}
-
-Graph \textit{Laplacians} have many useful mathematical properties.
-
-\subsubsection{Unnormalized Laplacian}
-
-\begin{equation}
-    \mathbf{L} = \mathbf{D} - \mathbf{A},
-\end{equation}
-where $\mathbf{D}$ is  matrix with node degrees (see Equation \ref{degree}) on its diagonals. The Laplacian summarizes many important properties of the graph.
 
 \section{Types of Graphs}
 
@@ -165,5 +155,99 @@ The following lists statistics on node-to-node relationships within graphs.
         \end{equation}
 \end{itemize}
 
+\section{Graph Laplacians}
+
+Graph \textit{Laplacians} have several useful mathematical properties that can help in tasks such as clustering. For more information read about \textbf{Spectral Graph Theory}.
+
+\subsection{Unnormalized Laplacian}
+
+\begin{equation}
+    \mathbf{L} = \mathbf{D} - \mathbf{A},
+\end{equation}
+where $\mathbf{D}$ is  matrix with node degrees (see Equation \ref{degree}) on its diagonals. The Laplacian summarizes several important properties of the graph including,
+
+\begin{enumerate}
+    \item It is symmetric and positive semi-definite.
+        \begin{equation}
+            \mathbf{x}^T\mathbf{L}\mathbf{x} \geq 0, \forall \mathbf{x} \in \mathbb{R}^{|V|}
+        \end{equation}
+    \item The following vector identity holds $\forall \mathbf{x} \in \mathbb{R}^{|V|}$
+        \begin{eqnarray}
+            \mathbf{x}^T\mathbf{L}\mathbf{x} &=& \frac{1}{2}\sum_{u \in \mathcal {V}}\sum_{v \in \mathcal{V}}\mathbf{A}[u,v](\mathbf{x}[u]-\mathbf{x}[v])^2\\
+            &=& \sum_{(u,v) \in \mathcal{E}}(\mathbf{x}[u]-\mathbf{x}[v])^2
+        \end{eqnarray}
+    \item $\mathbf{L}$ has $|V|$ non-negative eigenvalues: $0=\lambda_{|V|} \leq \lambda_{|V|-1} \leq ... \leq \lambda_1$
+\end{enumerate}
+
+\subsection{Normalized Laplacian}
+
+\begin{itemize}
+    \item \textbf{Symmetric normalized Laplacian}: 
+        \begin{equation}
+            \mathbf{L}_{\text{sym}} = \mathbf{D}^{-\frac{1}{2}}\mathbf{L}\mathbf{D}^{-\frac{1}{2}}
+        \end{equation}
+    \item \textbf{Random walk Laplacian}:
+        \begin{equation}
+            \mathbf{L}_{\text{RW}} = \mathbf{D}^{-1}\mathbf{L}
+        \end{equation}
+\end{itemize}
+
+\begin{theorem} \label{thm:connected_components}
+    The geometric multiplicity of the 0 eigenvalue (the dimension of the subspace spanned by the eigenvectors associated with $\lambda = 0$) of the Laplacian $\mathbf{L}$ corresponds to the number of connected components in the graph.
+\end{theorem}
+\begin{proof}
+    This can be seen by noting that for any eigenvector $\mathbf{e}$ of the eigenvalue $0$ we have that 
+    \begin{equation} \label{eq:ele}
+        \mathbf{e}^T\mathbf{L}\mathbf{e} = 0
+    \end{equation}
+    by the definition of the eigenvalue-eigenvector equation. And, the result in Equation \ref{eq:ele} implies that 
+    \begin{equation}
+        \sum_{(u,v) \in \mathcal{E}}(\mathbf{e}[u] - \mathbf{e}[v])^2 = 0.
+    \end{equation}
+    Therefore, $\mathbf{e}[u] = \mathbf{e}[v], \forall(u,v) \in \mathcal{E}$, hence $\mathbf{e}[u]$ is the same constant for all nodes $u$ that are in the same connected component.
+
+    If the graph is fully connected, the eigenvector for $\lambda=0$ will be a constant vector of ones $\mathbf{e} = \mathbf{1}_{|V|}$. Conversely, if the graph is composed of multiple connected components, then we will have blocks of the Laplacian that corresponds to each connected components that satisfies $\lambda_k = 0$ and $\mathbf{e}_k = \mathbf{1}_{|V_k|}$. Therefore, the number of these blocks corresponds to the number of connected components in the graph.
+\end{proof}
+
+\subsection{Graph cuts and clustering}
+
+Theorem \ref{thm:connected_components} can be used to create clusters of disconnected components. This section shows that the Laplacian can be used to give an optimal clustering of nodes \textit{within a fully connected graph}.
+
+\subsubsection{Graph cuts}
+
+An optimal cluster is defined formally as the minimization of the following equation.
+\begin{equation}
+    \text{cut}(\mathcal{A}_1, ..., \mathcal{A}_K) = \frac{1}{2}\sum_{k=1}^{K}|(u,v)\in \mathcal{E} : u \in \mathcal{A}_k, v \in \bar{\mathcal{A}}_k|,
+\end{equation}
+which is simply the count of how many edges cross the boundary between the partition of nodes. However, simply minimizing this can create a trivial solution of having a single node per cluster. Therefore we can instead minimize the \textit{Ratio cut}:
+\begin{equation}
+    \text{RatioCut}(\mathcal{A}_1, ..., \mathcal{A}_K) = \frac{1}{2}\sum_{k=1}^K\frac{|(u,v)\in \mathcal{E} : u \in \mathcal{A}_k, v\in \bar{\mathcal{A}}_k|}{|\mathcal{A}_k|}.
+\end{equation}
+Another popular choice is minimizing the \textit{Normalized Cut (NCut)}:
+\begin{equation}
+    \text{NCut}(\mathcal{A}_1, ..., \mathcal{A}_K) = \frac{1}{2}\sum_{k=1}^K\frac{|(u,v)\in \mathcal{E} : u \in \mathcal{A}_k, v\in \bar{\mathcal{A}}_k|}{\text{vol}(\mathcal{A}_k)},
+\end{equation}
+where $\text{vol}(\mathcal{A}) = \sum_{u \in \mathcal{A}}d[u]$. The NCut enforces that all clusters have a similar number of edges incident to their nodes.
+
+\subsubsection{Approximating the RatioCut with Laplacian spectrum}
+
+Setting 
+\begin{equation}
+    \mathbf{a} = \begin{cases}
+        \sqrt{\frac{|\bar{\mathcal{A}}|}{\mathcal{A}}} & \text{if} \; u \in \mathcal{A} \\
+        -\sqrt{\frac{|\mathcal{A}|}{\mathcal{A}}} & \text{if} \; u \in \bar{\mathcal{A}}
+    \end{cases},
+\end{equation}
+we find that 
+\begin{equation}
+    \mathbf{a}^T \mathbf{L}\mathbf{a} = |\mathcal{V}|\text{RatioCut}(\mathcal{A}, \bar{\mathcal{A}}).
+\end{equation}
+By the Rayleigh-Ritz Theorem, the solution to $\min_{\mathbf{a} \in \mathbb{R}^{|\mathcal{V}|}}\mathbf{a}^T\mathbf{L}\mathbf{a}$ is given by the second-smallest eigenvector of $\mathbf{L}$ (since the smallest eigenvector is equal to $\mathbf{1}$. Then clustering can be done as follows:
+\begin{equation}
+    \begin{cases}
+        u \in \mathcal{A} & \text{if} \; \mathbf{a}[u] \geq 0 \\
+        u \in \bar{\mathcal{A}} & \text{if} \; \mathbf{a}[u] < 0 \\
+    \end{cases}.
+\end{equation}
 
 \end{document}
