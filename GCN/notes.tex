@@ -1,0 +1,73 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \href{https://arxiv.org/pdf/1609.02907.pdf}{Semi-Supervised Classification with Graph Convolutional Networks}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Introduction}
+
+\begin{itemize}
+    \item Consider the problem of node classification (where labels are only available for a small subset of nodes)
+    \item Instead of using graph-based regularization, this work only trains of nodes with a supervised target $\mathcal{L}_0$, and shares the same set of parameters across the graph for inference.
+    \item Main contributions:
+        \begin{enumerate}
+            \item Introduce a simple and well-behaved layer-wise propagation rule for neural network models which operate directly on graphs
+            \item Demonstrate how this form of graph-based model can be used for fast and scalable semi-supervised node classification
+        \end{enumerate}
+\end{itemize}
+
+\section{Graph Convolutional Network Model}
+
+Layer-wise propagation rule for graph convolutional network model $f(X,A)$ ($X$ is the input and $A$ is the adjacency matrix):
+\begin{equation}
+    H^{l+1} = \sigma\bigl(\tilde{D}^{-\frac{1}{2}}\tilde{A}\tilde{D}^{-\frac{1}{2}}H^l W^l \bigr).
+\end{equation}
+Here, $\tilde{A} = A + I_N$ is the adjacency matrix of the undirected graph $\mathcal{G}$ with added self-connections, $\tilde{D}_{ii} = \sum_j \tilde{A}_{ij}$ and $W^l$ is a layer specific trainable weight matrix. $\sigma(\cdot)$ denotes an activation function. $H^l \in \mathbb{R}^{N\times D}$ are hidden latent representations at layer $l$ and $H^0 = X$.
+
+\subsection{Breaking it down}
+
+\begin{itemize}
+    \item $H^l W^l$ converts the hidden representation of size $N\times D^l$ to $N \times D^{l+1}$
+    \item $\tilde{D}^{-\frac{1}{2}}\tilde{A}\tilde{D}^{-\frac{1}{2}}$ normalizes the elements in the adjacency matrix $\tilde{A}_{ij}$ by $\frac{1}{\sqrt{\tilde{D}_{ii}}\sqrt{\tilde{D}_{jj}}}$.
+    \item $\tilde{D}^{-\frac{1}{2}}\tilde{A}\tilde{D}^{-\frac{1}{2}} H^l W^l$ represents the resultant hidden features after message passing of each node's latent representation to their one-hop neighbors weighted by each other's degree ($D_{ii}$ and $D_{jj}$).
+    \item Finally, $\sigma(\cdot)$ introduces a non-linearity.
+\end{itemize}
+
+\section{Semi-supervised Node Classification}
+
+Setting $\hat{A} = \tilde{D}^{-\frac{1}{2}}\tilde{A}\tilde{D}^{-\frac{1}{2}}$ a forward model of a 2-layer GCN takes the following form:
+\begin{equation}
+    Z = f(X,A) = \text{softmax}\bigl(\hat{A}\;\text{ReLU}(\hat{A}XW^0)W^1\bigr)
+\end{equation}
+
+For multi-class classification, the following loss function can be computed.
+\begin{equation}
+    \mathcal{L} = -\sum_{l \in \mathcal{Y}_L}\sum_{f = 1}^F Y_{lf}\text{ln}Z_{lf},
+\end{equation}
+with $F$ being the feature size of the output and $\mathcal{Y}_L$ is the set of node indices that have labels.
+
+\end{document}

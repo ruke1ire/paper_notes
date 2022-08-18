@@ -1,0 +1,76 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \href{https://arxiv.org/pdf/1710.10903.pdf}{Graph Attention Networks}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Introduction}
+
+\begin{itemize}
+    \item This work introduces an attention-based architecture to perform node classification of graph-structured data
+    \item The idea is to compute the hidden representation of each node in the graph, by attending over its neighbors, following a \textit{self-attention} strategy.
+\end{itemize}
+
+\section{Graph Attention Layer}
+
+\begin{itemize}
+    \item Input to a layer is $\mathbf{h} = \{\overrightarrow{h}_1, \overrightarrow{h}_2, ..., \overrightarrow{h}_N \}$, $\overrightarrow{h}_i \in \mathbb{R}^F$.
+    \item Output from a layer is $\mathbf{h}' = \{\overrightarrow{h}_1', \overrightarrow{h}_2', ..., \overrightarrow{h}_N' \}$, $\overrightarrow{h}_i' \in \mathbb{R}^{F'}$. 
+    \item \textit{Weight matrix} $\mathbf{W} \in \mathbb{R}^{F'\times F}$, is initially applied to every node $\mathbf{W}\overrightarrow{h}$.
+    \item \textit{Self-attention} $a : \mathbb{R}^{F'} \times \mathbb{R}^{F} \rightarrow \mathbb{R}$ is then applied to pairs of neighboring nodes to compute the \textit{attention coefficients}:
+        \begin{equation}
+            e_{ij} = a(\mathbf{W}\overrightarrow{h}_i, \mathbf{W}\overrightarrow{h}_j),
+        \end{equation}
+        where
+        \begin{equation}
+            a(\mathbf{W}\overrightarrow{h}_i, \mathbf{W}\overrightarrow{h}_j) = \text{LeakyReLU}(\overrightarrow{\mathbf{a}}^T[\mathbf{W}\overrightarrow{h}_i \parallel \mathbf{W}\overrightarrow{h}_j)]),
+        \end{equation}
+        where $\parallel$ represents the concatenation operation and $\overrightarrow{\mathbf{a}} \in \mathbb{R}^{2F'}$ is a weight vector shared across the graph.
+    \item Softmax is then applied to the attention coefficients for normalization
+        \begin{equation}
+            \alpha_{ij} = \text{softmax}_j(e_{ij}) = \frac{\text{exp}(e_{ij})}{\sum_{k \in \mathcal{N}_i} \text{exp}(e_{ij})},
+        \end{equation}
+        where $\mathcal{N}_i$ is the set of node $i$'s neighboring nodes.
+    \item Layer output is computed as follows:\footnote{Note that they do not use different weight matrices for the key, query, and value; which is interesting.}
+        \begin{equation}
+            \overrightarrow{h}_i' = \sigma\Bigl(\sum_{j \in \mathcal{N}_i} \alpha_{ij} \mathbf{W} \overrightarrow{h}_j \Bigr)
+        \end{equation}
+    \item For increased stability, they employ \textit{multi-head attention}
+        \begin{equation}
+            \overrightarrow{h}_i' = \parallel^{K}_{k=1} \sigma\Bigl(\sum_{j \in \mathcal{N}_i} \alpha_{ij} \mathbf{W} \overrightarrow{h}_j \Bigr)
+        \end{equation}
+\end{itemize}
+
+\section{Comparisons to related work}
+
+\begin{itemize}
+    \item As opposed to GCN's, GAT's allow for (implictly) assigning \textit{difference importances} to nodes of the same neighborhood.
+    \item Attention mechanism is applied in a shared manner to all edges in the graph. Therefore, it doesn't require the global graph structure like the adjacency matrix.
+    \item Graph may be undirected or directed
+\end{itemize}
+
+\end{document}
