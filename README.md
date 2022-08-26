@@ -15,3 +15,4 @@ Create a new note.
 - [Graph Representation Learning](https://github.com/ruke1ire/paper_notes/blob/main/GRL/notes.pdf)
 - [Group Theory](https://github.com/ruke1ire/paper_notes/blob/main/group_theory/notes.pdf)
 - [Multiagent Learning](https://github.com/ruke1ire/paper_notes/blob/main/multiagent_learning/notes.pdf)
+- [Carl Jung: Knowledge in a nutshell](https://github.com/ruke1ire/paper_notes/blob/main/carl_jung_nutshell/notes.pdf)
