@@ -1,0 +1,33 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \textbf{Multiagent Learning}\\\small{(Chapter 11 of Multiagent Systems by \textit{Gerhard Weiss})}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Introduction}
+
+\end{document}
