@@ -30,4 +30,44 @@
 
 \section{Introduction}
 
+The term multiagent planning is ambiguous as it can mean several things. This chapter focuses on the following.
+\begin{itemize}
+    \item Multiagent plan: A plan consisting of multiple agents.
+    \item Multiagent plan formation: The way a plan is formed. Either in a centralized way or a decentralized way.
+\end{itemize}
+
+\section{Coordination Prior to Local Planning}
+
+We can develop interaction rules to help form multiagent plans.
+
+\subsection{Social Laws and Conventions}
+
+Social laws that govern the behavior of the entire system. Each agent has to follow the social laws and/or conventions.
+
+\begin{enumerate}
+    \item Identify joint states that should be avoided (or sought).
+    \item Work backwards through agent's joint actions to identify possible precursor states to these states.
+    \item Impose constraints on agents' action choices in the precursor states to prevent (or require) accordingly. 
+\end{enumerate}
+
+\subsection{Organizational Structuring}
+
+While social laws and conventions apply equally to all agents, cooperation in some types of problems can be better achieved if agents are differntially biased in the actions they choose to, or choose not to take.
+
+\begin{itemize}
+    \item Organizational roles with identified responsibilities.
+    \item Roles may be determined by the built in sensor/actuator of the agent.
+\end{itemize}
+
+There is currently no consensus strategy for forming organizations for systems. But the following is an example algorithm.
+
+\begin{enumerate}
+    \item Divide an organization by finding subgoals.
+    \item Assign roles to each subgoal.
+    \item Assign agents to roles.
+\end{enumerate}
+
+\section{Local Planning Prior to Coordination}
+
+
 \end{document}
