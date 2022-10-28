@@ -1,0 +1,121 @@
+% pdflatex notes.tex 
+
+\documentclass[twocolumn]{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on Information Theory and Statistics}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Background}
+
+\subsection{Definition}
+
+Consider the \textit{probability space}:
+\begin{equation}
+    (x, y, \mu_i), \quad i = 1,2.
+\end{equation}
+$x$ are the elements, $y$ are the events (which is made up of elements), for which two hypotheses $\mu_1$ and $\mu_2$ are defined.
+
+As an example, $x$ may be the occurrence or non-occurrence of a signal pulse, and $y$ may be a collection of possible sequences of a certain length of pulse and no pulse.
+
+We assume that $\mu_1$ and $\mu_2$ are \textit{absolutely continuous}, meaning that there exists no event $E$ such that $\mu_1(E) = 0$ and $\mu_2(E) \not = 0$ and vice versa.
+
+Let $\lambda$ be a probability measure such that:
+\begin{equation}
+    \mu_i(E) = \int_{E}{f_i(x)d\lambda(x),} \quad i = 1,2,
+\end{equation}
+where $0<f_i(x)<\infty$.
+
+\begin{equation}
+    d\mu_i(x) = f_i(x) d \lambda(x) \rightarrow f_i(x) = \frac{d\mu_i}{d\lambda}.
+\end{equation}
+
+Given two hypotheses $H_1$ and $H_2$, the probability of a hypothesis given data $x$ is as follows:
+
+\begin{equation}
+    P(H_i \mid x) = \frac{P(H_i)f_i(x)}{P(H_1)f_1(x) + P(H_2)f_2(x)}, \quad i = 1,2,
+\end{equation}
+from which we obtain
+\begin{equation}
+    f_i(x) = \frac{P(H_i\mid x)\big(P(H_1)f_1(x) + P(H_2)f_2(x)\big)}{P(H_i)},
+\end{equation}
+therefore,
+\begin{equation}
+    \text{log}\frac{f_1(x)}{f_2(x)} = \text{log}\frac{P(H_1 \mid x)}{P(H_2 \mid x)} - \text{log}\frac{P(H_1)}{P(H_2)}.
+\end{equation}
+It could be noted that in the equation above, the difference between the logarithm of the odds in favor of $H_1$ after the observation of $X = x$ and before the observation may be considered as the information resulting from the observation $X = x$. 
+
+The \textit{mean information for discrimination in favor of $H_1$} can be formulated as follows:
+\begin{align}
+    I(1:2) &= \int{\text{log}\frac{f_1(x)}{f_2(x)}d\mu_1(x)} \\
+    &= \int{f_1(x)\text{log}\frac{f_1(x)}{f_2(x)}d\lambda(x)} \\
+    &= \int \text{log}\frac{P(H_1 \mid x)}{P(H_2 \mid x)}d\mu_1 (x) - \text{log}\frac{P(H_1)}{P(H_2)}
+\end{align}
+
+\subsection{Divergence}
+
+Following the previous section, we may define
+\begin{equation}
+    I(2:1) = \int f_2(x) \text{log}\frac{f_2(x)}{f_1(x)}d \lambda (x) 
+\end{equation}
+as the \textit{mean information per observation from $\mu_2$ for discrimination in favor of $H_2$ against $H_1$}, and
+\begin{equation}
+    -I(2:1) = \int f_2(x) \text{log}\frac{f_1(x)}{f_2(x)}d \lambda (x) 
+\end{equation}
+as the \textit{mean information per observation from $\mu_2$ for discrimination in favor of $H_1$ against $H_2$.}
+
+We now define the \textit{divergence} $J(1,2)$ by 
+\begin{align}
+    J(1,2) &= I(1:2) + I(2:1) \\
+    &= \int \big(f_1(x) - f_2(x)\big) \text{log}\frac{f_1(x)}{f_2(x)}d \lambda(x) \\
+    &= \int \text{log}\frac{P(H_1 \mid x)}{P(H_2 \mid x)}d\mu_1(x) - \int \text{log} \frac{P(H_1\mid x)}{P(H_2 \mid x)} d \mu_2(x),
+\end{align}
+which can be said as the \textit{total discrimination of one hypothesis over another.}
+
+\subsection{Entropy}
+
+Suppose $H_2$ is a hypothesis which must be true, meaning $P(H_2) = 1$, and $H_1 \in H_2$. We can compute the information for discrimination in favor of $H_1$ as:
+\begin{equation}
+    \text{log}\frac{f_1(x)}{f_2(x)} = \text{log}\frac{P(H_1 \mid x)}{1} - \text{log}\frac{P(H_1)}{1}.
+\end{equation}
+If $P(H_1 \mid x) = 1$, information gain from the observation is $-\text{log}P(H_1)$.
+
+To carry this notion further, suppose a set of mutually exclusive and exhaustive hypotheses $H_1$, $H_2$, $\dots$, $H_n$ exists and that we can infer which hypothesis is true from the observation. The mean information in an observation about the hypotheses is the mean value of $-\text{log}P(H_i), \; i=1,\dots,n$.
+
+This expression is also called entropy, and it can be defined as
+\begin{equation}
+    -\sum_{i = 1}^{n}{P(H_i)\text{log}P(H_i)}.
+\end{equation}
+
+\section{Properties of Information}
+
+\subsection{Additivity}
+
+$I(1:2)$ is additive for independent random events; that is, for $X$ and $Y$ independent under $H_i , \; i = 1,2$,
+\begin{equation}
+    I(1:2;X,Y)= I(1:2;X)+I(1:2;Y).
+\end{equation}
+
+\end{document}
