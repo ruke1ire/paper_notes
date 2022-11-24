@@ -1,0 +1,129 @@
+% pdflatex notes.tex 
+
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{amsthm}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\begin{document}
+
+\title{Notes on \href{https://arxiv.org/pdf/2006.16712.pdf}{Model-based RL: A Survey}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\begin{itemize}
+    \item Difference between planning and RL:
+        \begin{itemize}[nolistsep]
+            \item \textbf{Planning} is a class of MDP algorithms that use a model and store a local solution.
+            \item \textbf{Reinforcement Learing} is a class of MDP algorithms that share a global solution.
+        \end{itemize}
+    \item \textbf{Model-based reinforcement learning} is a class of MDP algorithms that use a model, and store a global solution.
+    \item \textit{Learning} can be done in three ways:
+        \begin{itemize}[nolistsep]
+            \item Model-based RL with a learned model, where we both learn a model and learn a global solution.
+            \item Model-based RL with known model, where we plan over a known model, and only use learning for the global solution.
+            \item Planning over a learned model, where we do lean a model, but subsequently locally plan over it (without learning a global solution).
+        \end{itemize}
+    \item There are various types of \textbf{dynamics models}, which attempt to learn the transition probabilities between states.
+        \begin{itemize}[nolistsep]
+            \item \textbf{Forward model}: $(s_t, a_t) \rightarrow s_{t+1}$ \footnote{This is the most common type of model.}
+            \item \textbf{Backward/reverse model}: $s_{t+1} \rightarrow (s_t, a_t)$
+            \item \textbf{Inverse model}: $(s_t, s_{t+1}) \rightarrow a_t$
+        \end{itemize}
+    \item There are also several estimation methods utilized in dynamics models:
+        \begin{itemize}[nolistsep]
+            \item Parametric: Model doesn't depend on size of observed dataset, instead, uses parameters to approximate the transition probabilities.
+            \item Non-parametric: Uses the observed dataset itself as the model. We can think of replay buffers as a form of non-parametric model, or in other cases, Gaussian processes can be used as well.
+        \end{itemize}
+    \item Finally, another important consideration is the region in which the model is valid:
+        \begin{itemize}[nolistsep]
+            \item Globally valid models
+            \item Locally valid models: Only locally approximate the dynamics model (popular in the control community). Benefit is that we can use a linear model which is easier to analyze.
+        \end{itemize}
+    \item \textbf{Stochasticity}: In a stochastic MDP, the transition function specifies a distribution over possible states. 
+    \item \textbf{Uncertainty}: When our observed output is limited, the model may be uncertain about the transition model of unobserved regions.
+        \begin{itemize}[nolistsep]
+            \item Bayesian methods: Gaussian process techniques (good but poor scalability)
+            \item Variational inference and variational dropout
+        \end{itemize}
+    \item \textbf{Partial Observability}: When the observation does not provide all information necessary to infer a state in the MDP. Usually, this can be partially mitigated by incorporating observation from multiple timesteps.
+        \begin{itemize}[nolistsep]
+            \item Windowing: Concatenate $n$ most recent observations and treat them together as a state.
+            \item Belief states: Partitions problem into $p(o\mid s)$ and $\mathcal{T}(s'\mid s,a)$.
+            \item Recurrency: Use recurrent neural networks. Suffers from vanishing and exploding gradient.
+            \item External memory: Use an external memory (triggered by an agent) to memorize historical information.
+        \end{itemize}
+    \item \textbf{Non-stationarity} in an MDP occurs when the true transition and/or reward function changes over time.
+    \item \textbf{Multi-step prediction}: We eventually intend to use these models in multi-step planning procedures. 
+        \begin{itemize}[nolistsep]
+            \item Loss function for multi-step predictions
+            \item Leanrn a new dynamics model for different time steps. (i.e., $\mathcal{T}^3(\hat{s}_{t+3} \mid s_t, a_t, a_{t+1}, a_{t+2})$)
+        \end{itemize}
+    \item \textbf{State abstraction}: In neural network-based approach, the dynamics model is typically factorized into three parts:
+        \begin{itemize}[nolistsep]
+            \item Encoding function: $z_t = f^{\text{enc}}(s_t)$
+            \item Latent dynamics function: $z_{t+1} = f^{\text{trans}}(z_t, a_t)$
+            \item Decoder function: $s_{t+1} = f^{\text{dec}}(z_{t+1})$
+        \end{itemize}
+    Additionally, there are 3 important additional these for state representation learning in dynamics models:
+        \begin{itemize}[nolistsep]
+            \item How do we ensure that we can plan at the more abstract level? If we can ensure this, we can learn in latent space (which is usually faster to roll-out). Some researchers find latent representations that follow a linear model (then use techniques like LQR to find the agent).
+            \item How may we better structure our models to emphasize objects and their physical interactions? (Object-oriented models?)
+            \item How may we construct loss functions that retrieve more information representations? (Predict relative effect $s_{t+1} - s_t$ helps focus on moving objects, contrasive loss, value equivalent models (create dynamics model that can correctly predict value functions)).
+        \end{itemize}
+    \item \textbf{Temporal abstraction} (hierarchical reinforcement learning): Identifying a high level action space that extends over multiple timesteps. Two popular methods are the \textit{options} method, discrete set of high level actions; and the \textbf{goal-conditioned policy/value functions} (GCVF), $Q(s,a,g)$ which is a universal value function. How to discover the subroutines?
+        \begin{itemize}
+            \item Graph structure: Identify bottleneck states (which are like checkpoints).
+            \item State-space coverage: Cluster state-spaces, then identify policies to move between the centers of each cluster.
+            \item Compression: Associate state-space with noise distribution.
+            \item Reward relevancy: Relevant subroutines will help incur extra reward, and they should therefore automatically emerge from a black-box optimization approach.
+            \item Priors: Use prior knowledge to identify useful subroutines.
+        \end{itemize}
+    \item Four main question of the integration of planning and learning:
+        \begin{itemize}[nolistsep]
+            \item At which state do we start planning?
+                \begin{itemize}[nolistsep]
+                    \item \textit{Uniform}: Select all states in the state space and formulate a plan for each state. Drawback is that it is very time-consuming and intractable for high dimensional spaces.
+                    \item \textit{Visited}: Only plan for visited states.
+                    \item \textit{Prioritized}: Prioritize which states likely would need planning.
+                    \item \textit{Current}: Only spend effort planning for the current state.
+                \end{itemize}
+            \item How much planning budget do we allocate?
+            \item How to plan?
+                \begin{itemize}[nolistsep]
+                    \item Type: (Discrete planning): Table-based or tree-based planning. They do not require differentiability of the model. E.g., MCTS, minimax-search.
+                    \item Type: (Differential planning): Requires model to be differentiable. We can directly find the derivative of the policy with respect to the cumulative predicted rewards of the environment model. E.g., Dreamer, PILCO, Guided policy search, iterative linear quadratic regulator planning.
+                    \item Breadth and depth
+                    \item Uncertainty: (data-close planning): Plan close to past observation.
+                    \item Uncertainty: (uncertainty propagation): Explicitly estimate model uncertainty, so that planning prediction spread out (vanish) over long horizon.
+                \end{itemize}
+            \item How to integrate planning in the learning and acting loop?
+                \begin{itemize}
+                    \item Input to planning: Policy/value prior can help in planning.
+                    \item Updating with planning: Planning can help in updating policy/value.
+                    \item Output of planning: Planning can help provide the action to be performed.
+                \end{itemize}
+            \item Implicit Model-based RL: Take one or more aspects of model-based RL process and optimize these for the ultimate objective (optimal value or policy computation). For optimal value, simply train the "planning" part to predict the correct \textbf{optimal} value. Or planning itself can be some sort of differentiable procedure, where in a MCTS search, each action (backup, selection, etc.) is parameterized using a neural network.
+        \end{itemize}
+
+\end{itemize}
+
+\end{document}

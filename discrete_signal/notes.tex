@@ -1,0 +1,168 @@
+% pdflatex notes.tex && pdflatex notes.tex
+
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{pifont}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{empheq}
+\usepackage{geometry}
+\usepackage{amsthm}
+\usepackage{multicol}
+\geometry{a4paper, margin=1cm, includefoot}
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!15, boxrule=1pt,
+    #1}
+
+\newcommand{\myeq}[2]{
+    \begin{multicols}{2}
+            #1
+    \columnbreak
+        \\
+        \\
+        #2
+    \end{multicols}
+    \hrulefill
+}
+
+\begin{document}
+
+\title{Notes on \href{https://books-library.net/files/books-library.net-02190127Xu1L6.pdf}{Discrete Time Signal Processing 3}}
+\author{Rom Parnichkun}
+
+\maketitle
+
+\section{Discrete Time Signals}
+
+\hrulefill
+\myeq{
+    \begin{equation}
+        x[n] = x(nT)
+    \end{equation}
+}{A discrete signal $x$ sampled at period $T$.}
+
+\subsection{Basic sequences}
+
+\myeq{
+    \begin{equation}
+        \delta[n] = \begin{cases}
+            0 & n \neq 0 \\
+            1 & n = 0
+        \end{cases}
+    \end{equation}
+}{This is the \textbf{unit sample} (impulse) function.}
+
+\myeq{
+    \begin{equation}
+        x[n] = \sum_{k = -\infty}^{\infty}{\delta[k-n]x[k]}
+    \end{equation}
+}{
+    This derivation seems quite redundant, however it will be useful later on when analyzing linear time invariant systems.}
+
+\myeq{
+    \begin{equation}
+        u[n] = \begin{cases}
+            0 & n < 0 \\
+            1 & n \geq 0
+        \end{cases}
+        = \sum_{k = -\infty}^{\infty}{\delta} = \sum_{k = 0}^{\infty}{\delta[n-k]}
+    \end{equation}
+}{This is the \textbf{unit step} function.}
+
+\myeq{
+    \begin{equation}
+        x[n] = A\alpha^n \label{eq:general_exponential}
+    \end{equation}
+}{General exponential sequence.}
+
+\myeq{
+    \begin{align}
+        x[n] &= |A||\alpha|^n e^{(\omega_0 n + \phi)j} \\
+        &= |A||\alpha|^n \left[ \text{cos}(\omega_0 n + \phi) \text{sin}(\omega_0 n + \phi) \right]
+    \end{align}
+}{Setting $A = |A|e^{j\phi}$ and $\alpha = |\alpha|e^{j\omega_0}$.}
+
+\break
+
+\myeq{
+    \begin{align}
+        x[n] &= |A||\alpha|^n e^{(\omega_1 n + \phi)j} \\
+        &= |A||\alpha|^n e^{((2\pi + \omega_0)n + \phi)j} \\
+        &= |A||\alpha|^n e^{(\omega_0 n + \phi)j} e^{2\pi nj} \\
+        &= |A||\alpha|^n e^{(\omega_0 n + \phi)j}1
+    \end{align}
+    }{It could be noted that the effective frequency range in discrete systems is $2\pi$ because $n$ is an integer. As an example, here we set $\omega_1 = 2\pi + \omega_0$.}
+
+\section{Discrete time systems}
+
+\myeq{
+    \begin{equation}
+        y[n] = T\{x[n]\}
+    \end{equation}
+}
+{General representation of discrete time systems. Note that the output sequence at each value of the index $n$ may depend on input samples $x[n]$ of all $n$.}
+
+\myeq{
+    \begin{multline} \label{eq:additivity}
+        T\{x_1[n] + x_2[n]\} = T\{x_1[n]\} + T\{x_2[n]\} \\
+        = y_1[n] + y_2[n]
+    \end{multline}
+    \begin{equation} \label{eq:scaling}
+        T\{ax[n]\} = aT\{x[n]\} = ay[n]
+    \end{equation}
+}{\textbf{Linear systems} are defined by the principle of superposition. Equation \ref{eq:additivity} follows the property of \textit{additivity}, and Equation \ref{eq:scaling} follows the property of \textit{scaling} or \textit{homogeneity}.}
+
+\myeq{
+    \begin{align}
+        y[n] &= T\{\sum^{\infty}_{-\infty}{x[k]\delta[n-k]}\} \\
+        &= \sum^{\infty}_{-\infty}x[k]T\{\delta[n-k]\} \\
+        &= \sum^{\infty}_{-\infty}x[k]h_k[n] \label{eq:lti}\\ 
+        &= \sum^{\infty}_{-\infty}x[k]h[n-k] \label{eq:lti2}
+    \end{align}
+}{\textbf{Linear time-invariant systems (LTI)}. Because of the time-invariant property, $h_k[n]$ in Equation \ref{eq:lti} can be used for all values of $k$.}
+
+\myeq{
+ \begin{equation}
+     y[n] = x[n] \ast h[n]
+ \end{equation}
+}{
+    As a consequence of Equation \ref{eq:lti2}, LTI systems can be represented as a convolutional operator on the input data.
+}
+
+\myeq{
+    \begin{equation} \label{eq:lti_commutative}
+        x[n] \ast h[n] = h[n] \ast x[n] 
+    \end{equation}
+    \begin{equation} \label{eq:lti_distributive}
+        x[n] \ast (h_1[n] + h_2[n]) = x[n]\ast h_1 [n] + x[n] \ast h_2[n]
+    \end{equation}
+    \begin{equation} \label{eq:lti_associative}
+        y[n] = (x[n]\ast h_1[n])\ast h_2[n] = x[n] \ast (h_1[n] \ast h_2[n])
+    \end{equation}
+}{Properties of LTI systems. LTI are commutative (Equation \ref{eq:lti_commutative}), distributive (Equation \ref{eq:lti_distributive}), associative (Equation \ref{eq:lti_associative}). Therefore, multiple LTI systems can be combined into one.}
+
+\myeq{
+    \begin{equation}
+        h[n] = 0 , \quad n < 0
+    \end{equation}
+}
+{Causal LTI system only have response for $n>=0$.}
+
+
+
+
+
+
+
+
+
+
+\end{document}
